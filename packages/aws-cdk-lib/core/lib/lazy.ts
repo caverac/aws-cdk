@@ -141,21 +141,6 @@ export interface LazyAnyValueOptions {
  */
 export class Lazy {
   /**
-   * Defer the calculation of a string value to synthesis time
-   *
-   * Use this if you want to render a string to a template whose actual value depends on
-   * some state mutation that may happen after the construct has been created.
-   *
-   * If you are simply looking to force a value to a `string` type and don't need
-   * the calculation to be deferred, use `Token.asString()` instead.
-   *
-   * @deprecated Use `Lazy.string()` or `Lazy.uncachedString()` instead.
-   */
-  public static stringValue(producer: IStringProducer, options: LazyStringValueOptions = {}) {
-    return Token.asString(new LazyString(producer, false), options);
-  }
-
-  /**
    * Defer the one-time calculation of a string value to synthesis time
    *
    * Use this if you want to render a string to a template whose actual value depends on
@@ -196,21 +181,6 @@ export class Lazy {
    * If you are simply looking to force a value to a `number` type and don't need
    * the calculation to be deferred, use `Token.asNumber()` instead.
    *
-   * @deprecated Use `Lazy.number()` or `Lazy.uncachedNumber()` instead.
-   */
-  public static numberValue(producer: INumberProducer) {
-    return Token.asNumber(new LazyNumber(producer, false));
-  }
-
-  /**
-   * Defer the one-time calculation of a number value to synthesis time
-   *
-   * Use this if you want to render a number to a template whose actual value depends on
-   * some state mutation that may happen after the construct has been created.
-   *
-   * If you are simply looking to force a value to a `number` type and don't need
-   * the calculation to be deferred, use `Token.asNumber()` instead.
-   *
    * The inner function will only be invoked once, and the resolved value
    * cannot depend on the Stack the Token is used in.
    */
@@ -232,21 +202,6 @@ export class Lazy {
    */
   public static uncachedNumber(producer: INumberProducer) {
     return Token.asNumber(new LazyNumber(producer, false));
-  }
-
-  /**
-   * Defer the one-time calculation of a list value to synthesis time
-   *
-   * Use this if you want to render a list to a template whose actual value depends on
-   * some state mutation that may happen after the construct has been created.
-   *
-   * If you are simply looking to force a value to a `string[]` type and don't need
-   * the calculation to be deferred, use `Token.asList()` instead.
-   *
-   * @deprecated Use `Lazy.list()` or `Lazy.uncachedList()` instead.
-   */
-  public static listValue(producer: IListProducer, options: LazyListValueOptions = {}) {
-    return Token.asList(new LazyList(producer, false, options), options);
   }
 
   /**
@@ -279,18 +234,6 @@ export class Lazy {
    */
   public static list(producer: IStableListProducer, options: LazyListValueOptions = {}) {
     return Token.asList(new LazyList(producer, true, options), options);
-  }
-
-  /**
-   * Defer the one-time calculation of an arbitrarily typed value to synthesis time
-   *
-   * Use this if you want to render an object to a template whose actual value depends on
-   * some state mutation that may happen after the construct has been created.
-   *
-   * @deprecated Use `Lazy.any()` or `Lazy.uncachedAny()` instead.
-   */
-  public static anyValue(producer: IAnyProducer, options: LazyAnyValueOptions = {}): IResolvable {
-    return new LazyAny(producer, false, options);
   }
 
   /**

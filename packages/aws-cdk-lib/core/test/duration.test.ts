@@ -67,22 +67,6 @@ describe('duration', () => {
     expect(duration.toDays()).toEqual(1);
   });
 
-  testDeprecated('toISOString', () => {
-    expect(Duration.millis(0).toISOString()).toEqual('PT0S');
-    expect(Duration.seconds(0).toISOString()).toEqual('PT0S');
-    expect(Duration.minutes(0).toISOString()).toEqual('PT0S');
-    expect(Duration.hours(0).toISOString()).toEqual('PT0S');
-    expect(Duration.days(0).toISOString()).toEqual('PT0S');
-
-    expect(Duration.millis(5).toISOString()).toEqual('PT0.005S');
-    expect(Duration.seconds(5).toISOString()).toEqual('PT5S');
-    expect(Duration.minutes(5).toISOString()).toEqual('PT5M');
-    expect(Duration.hours(5).toISOString()).toEqual('PT5H');
-    expect(Duration.days(5).toISOString()).toEqual('P5D');
-
-    expect(Duration.seconds(1 + 60 * (1 + 60 * (1 + 24))).toISOString()).toEqual('P1DT1H1M1S');
-  });
-
   test('toIsoString', () => {
     expect(Duration.millis(0).toIsoString()).toEqual('PT0S');
     expect(Duration.seconds(0).toIsoString()).toEqual('PT0S');

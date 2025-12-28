@@ -636,17 +636,6 @@ export class Stack extends Construct implements ITaggable {
   }
 
   /**
-   * DEPRECATED
-   * @deprecated use `reportMissingContextKey()`
-   */
-  public reportMissingContext(report: cxapi.MissingContext) {
-    if (!Object.values(cxschema.ContextProvider).includes(report.provider as cxschema.ContextProvider)) {
-      throw new ValidationError(`Unknown context provider requested in: ${JSON.stringify(report)}`, this);
-    }
-    this.reportMissingContextKey(report as cxschema.MissingContext);
-  }
-
-  /**
    * Indicate that a context key was expected
    *
    * Contains instructions which will be emitted into the cloud assembly on how
@@ -1438,17 +1427,6 @@ export class Stack extends Construct implements ITaggable {
     this._logicalIds.assertAllRenamesApplied();
 
     return ret;
-  }
-
-  /**
-   * Deprecated.
-   *
-   * @see https://github.com/aws/aws-cdk/pull/7187
-   * @returns reference itself without any change
-   * @deprecated cross reference handling has been moved to `App.prepare()`.
-   */
-  protected prepareCrossReference(_sourceStack: Stack, reference: Reference): IResolvable {
-    return reference;
   }
 
   /**

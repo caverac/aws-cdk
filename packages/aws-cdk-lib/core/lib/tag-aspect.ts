@@ -92,26 +92,6 @@ abstract class TagBase implements IAspect {
  */
 export class Tag extends TagBase {
   /**
-   * DEPRECATED: add tags to the node of a construct and all its the taggable children
-   *
-   * @deprecated use `Tags.of(scope).add()`
-   */
-  public static add(scope: Construct, key: string, value: string, props: TagProps = {}) {
-    Annotations.of(scope).addDeprecation('@aws-cdk/core.Tag.add(scope,k,v)', 'Use "Tags.of(scope).add(k,v)" instead');
-    Tags.of(scope).add(key, value, props);
-  }
-
-  /**
-   * DEPRECATED: remove tags to the node of a construct and all its the taggable children
-   *
-   * @deprecated use `Tags.of(scope).remove()`
-   */
-  public static remove(scope: Construct, key: string, props: TagProps = {}) {
-    Annotations.of(scope).addDeprecation('@aws-cdk/core.Tag.remove(scope,k,v)', 'Use "Tags.of(scope).remove(k,v)" instead');
-    Tags.of(scope).remove(key, props);
-  }
-
-  /**
    * The string value of the tag
    */
   public readonly value: string;
