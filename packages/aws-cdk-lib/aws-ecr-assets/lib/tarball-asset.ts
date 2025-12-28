@@ -1,9 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Construct } from 'constructs';
-import { IAsset } from '../../assets';
 import * as ecr from '../../aws-ecr';
-import { AssetStaging, Names, Stack, Stage, ValidationError } from '../../core';
+import { AssetStaging, Names, Stack, Stage, ValidationError, IAsset } from '../../core';
 
 /**
  * The sed pattern used to extract the image ID from docker load output

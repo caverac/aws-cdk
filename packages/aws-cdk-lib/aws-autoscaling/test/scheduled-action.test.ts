@@ -96,8 +96,6 @@ describeDeprecated('scheduled action', () => {
           },
           UpdatePolicy: {
             AutoScalingRollingUpdate: {
-              WaitOnResourceSignals: false,
-              PauseTime: 'PT0S',
               SuspendProcesses: [
                 'HealthCheck',
                 'ReplaceUnhealthy',
@@ -232,6 +230,6 @@ function makeAutoScalingGroup(scope: constructs.Construct) {
     vpc,
     instanceType: new ec2.InstanceType('t2.micro'),
     machineImage: new ec2.AmazonLinuxImage(),
-    updateType: autoscaling.UpdateType.ROLLING_UPDATE,
+    updatePolicy: autoscaling.UpdatePolicy.rollingUpdate(),
   });
 }

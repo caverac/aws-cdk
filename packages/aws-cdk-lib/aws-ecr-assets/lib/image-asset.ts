@@ -1,9 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Construct } from 'constructs';
-import { FingerprintOptions, FollowMode, IAsset } from '../../assets';
 import * as ecr from '../../aws-ecr';
-import { Annotations, AssetStaging, FeatureFlags, FileFingerprintOptions, IgnoreMode, Stack, SymlinkFollowMode, Token, Stage, CfnResource, Names, ValidationError, UnscopedValidationError } from '../../core';
+import { Annotations, AssetStaging, FeatureFlags, FileFingerprintOptions, IgnoreMode, Stack, SymlinkFollowMode, Token, Stage, CfnResource, Names, ValidationError, UnscopedValidationError, IAsset } from '../../core';
 import { propertyInjectable } from '../../core/lib/prop-injectable';
 import * as cxapi from '../../cx-api';
 
@@ -187,7 +186,7 @@ export interface DockerCacheOption {
 /**
  * Options for DockerImageAsset
  */
-export interface DockerImageAssetOptions extends FingerprintOptions, FileFingerprintOptions {
+export interface DockerImageAssetOptions extends FileFingerprintOptions {
   /**
    * ECR repository name
    *
@@ -525,7 +524,7 @@ export class DockerImageAsset extends Construct implements IAsset {
 
     const staging = new AssetStaging(this, 'Staging', {
       ...props,
-      follow: props.followSymlinks ?? toSymlinkFollow(props.follow),
+      follow: props.followSymlinks,
       exclude,
       ignoreMode,
       sourcePath: dir,
@@ -635,14 +634,4 @@ function validateBuildArgs(buildArgs?: { [key: string]: string }) {
 
 function validateBuildSecrets(buildSecrets?: { [key: string]: string }) {
   validateBuildProps('buildSecrets', buildSecrets);
-}
-
-function toSymlinkFollow(follow?: FollowMode): SymlinkFollowMode | undefined {
-  switch (follow) {
-    case undefined: return undefined;
-    case FollowMode.NEVER: return SymlinkFollowMode.NEVER;
-    case FollowMode.ALWAYS: return SymlinkFollowMode.ALWAYS;
-    case FollowMode.BLOCK_EXTERNAL: return SymlinkFollowMode.BLOCK_EXTERNAL;
-    case FollowMode.EXTERNAL: return SymlinkFollowMode.EXTERNAL;
-  }
 }

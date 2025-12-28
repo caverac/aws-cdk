@@ -18,7 +18,7 @@ import {
   Annotations,
   Aspects,
   Aws,
-  CfnAutoScalingRollingUpdate, CfnCreationPolicy, CfnUpdatePolicy,
+  CfnCreationPolicy, CfnUpdatePolicy,
   Duration, FeatureFlags, Fn, IResource, Lazy, PhysicalName, Resource, Stack, Tags,
   Token,
   Tokenization, UnscopedValidationError, ValidationError, withResolved,
@@ -135,41 +135,6 @@ export interface CommonAutoScalingGroupProps {
   readonly allowAllOutbound?: boolean;
 
   /**
-   * What to do when an AutoScalingGroup's instance configuration is changed
-   *
-   * This is applied when any of the settings on the ASG are changed that
-   * affect how the instances should be created (VPC, instance type, startup
-   * scripts, etc.). It indicates how the existing instances should be
-   * replaced with new instances matching the new config. By default,
-   * `updatePolicy` takes precedence over `updateType`.
-   *
-   * @default UpdateType.REPLACING_UPDATE, unless updatePolicy has been set
-   * @deprecated Use `updatePolicy` instead
-   */
-  readonly updateType?: UpdateType;
-
-  /**
-   * Configuration for rolling updates
-   *
-   * Only used if updateType == UpdateType.RollingUpdate.
-   *
-   * @default - RollingUpdateConfiguration with defaults.
-   * @deprecated Use `updatePolicy` instead
-   */
-  readonly rollingUpdateConfiguration?: RollingUpdateConfiguration;
-
-  /**
-   * Configuration for replacing updates.
-   *
-   * Only used if updateType == UpdateType.ReplacingUpdate. Specifies how
-   * many instances must signal success for the update to succeed.
-   *
-   * @default minSuccessfulInstancesPercent
-   * @deprecated Use `signals` instead
-   */
-  readonly replacingUpdateMinSuccessfulInstancesPercent?: number;
-
-  /**
    * If the ASG has scheduled actions, don't reset unchanged group sizes
    *
    * Only used if the ASG has scheduled actions (which may scale your ASG up
@@ -181,24 +146,6 @@ export interface CommonAutoScalingGroupProps {
    * @default true
    */
   readonly ignoreUnmodifiedSizeProperties?: boolean;
-
-  /**
-   * How many ResourceSignal calls CloudFormation expects before the resource is considered created
-   *
-   * @default 1 if resourceSignalTimeout is set, 0 otherwise
-   * @deprecated Use `signals` instead.
-   */
-  readonly resourceSignalCount?: number;
-
-  /**
-   * The length of time to wait for the resourceSignalCount
-   *
-   * The maximum value is 43200 (12 hours).
-   *
-   * @default Duration.minutes(5) if resourceSignalCount is set, N/A otherwise
-   * @deprecated Use `signals` instead.
-   */
-  readonly resourceSignalTimeout?: Duration;
 
   /**
    * Default scaling cooldown for this AutoScalingGroup
@@ -1826,20 +1773,6 @@ export class AutoScalingGroup extends AutoScalingGroupBase implements
    * Apply CloudFormation update policies for the AutoScalingGroup
    */
   private applyUpdatePolicies(props: AutoScalingGroupProps, signalOptions: RenderSignalsOptions) {
-    // Make sure people are not using the old and new properties together
-    const oldProps: Array<keyof AutoScalingGroupProps> = [
-      'updateType',
-      'rollingUpdateConfiguration',
-      'resourceSignalCount',
-      'resourceSignalTimeout',
-      'replacingUpdateMinSuccessfulInstancesPercent',
-    ];
-    for (const prop of oldProps) {
-      if ((props.signals || props.updatePolicy) && props[prop] !== undefined) {
-        throw new ValidationError(`Cannot set 'signals'/'updatePolicy' and '${prop}' together. Prefer 'signals'/'updatePolicy'`, this);
-      }
-    }
-
     // Reify updatePolicy to `rollingUpdate` default in case it is combined with `init`
     props = {
       ...props,
@@ -1848,8 +1781,6 @@ export class AutoScalingGroup extends AutoScalingGroupBase implements
 
     if (props.signals || props.updatePolicy) {
       this.applyNewSignalUpdatePolicies(props, signalOptions);
-    } else {
-      this.applyLegacySignalUpdatePolicies(props);
     }
 
     // The following is technically part of the "update policy" but it's also a completely
@@ -1896,46 +1827,6 @@ export class AutoScalingGroup extends AutoScalingGroupBase implements
     this.autoScalingGroup.cfnOptions.updatePolicy = props.updatePolicy?._renderUpdatePolicy({
       creationPolicy: this.autoScalingGroup.cfnOptions.creationPolicy,
     });
-  }
-
-  private applyLegacySignalUpdatePolicies(props: AutoScalingGroupProps) {
-    if (props.updateType === UpdateType.REPLACING_UPDATE) {
-      this.autoScalingGroup.cfnOptions.updatePolicy = {
-        ...this.autoScalingGroup.cfnOptions.updatePolicy,
-        autoScalingReplacingUpdate: {
-          willReplace: true,
-        },
-      };
-
-      if (props.replacingUpdateMinSuccessfulInstancesPercent !== undefined) {
-        // Yes, this goes on CreationPolicy, not as a process parameter to ReplacingUpdate.
-        // It's a little confusing, but the docs seem to explicitly state it will only be used
-        // during the update?
-        //
-        // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-creationpolicy.html
-        this.autoScalingGroup.cfnOptions.creationPolicy = {
-          ...this.autoScalingGroup.cfnOptions.creationPolicy,
-          autoScalingCreationPolicy: {
-            minSuccessfulInstancesPercent: validatePercentage(props.replacingUpdateMinSuccessfulInstancesPercent),
-          },
-        };
-      }
-    } else if (props.updateType === UpdateType.ROLLING_UPDATE) {
-      this.autoScalingGroup.cfnOptions.updatePolicy = {
-        ...this.autoScalingGroup.cfnOptions.updatePolicy,
-        autoScalingRollingUpdate: renderRollingUpdateConfig(props.rollingUpdateConfiguration),
-      };
-    }
-
-    if (props.resourceSignalCount !== undefined || props.resourceSignalTimeout !== undefined) {
-      this.autoScalingGroup.cfnOptions.creationPolicy = {
-        ...this.autoScalingGroup.cfnOptions.creationPolicy,
-        resourceSignal: {
-          count: props.resourceSignalCount,
-          timeout: props.resourceSignalTimeout && props.resourceSignalTimeout.toIsoString(),
-        },
-      };
-    }
   }
 
   private renderNotificationConfiguration(): CfnAutoScalingGroup.NotificationConfigurationProperty[] | undefined {
@@ -2093,30 +1984,6 @@ export class AutoScalingGroup extends AutoScalingGroupBase implements
 }
 
 /**
- * The type of update to perform on instances in this AutoScalingGroup
- *
- * @deprecated Use UpdatePolicy instead
- */
-export enum UpdateType {
-  /**
-   * Don't do anything
-   */
-  NONE = 'None',
-
-  /**
-   * Replace the entire AutoScalingGroup
-   *
-   * Builds a new AutoScalingGroup first, then delete the old one.
-   */
-  REPLACING_UPDATE = 'Replace',
-
-  /**
-   * Replace the instances in the AutoScalingGroup.
-   */
-  ROLLING_UPDATE = 'RollingUpdate',
-}
-
-/**
  * AutoScalingGroup fleet change notifications configurations.
  * You can configure AutoScaling to send an SNS notification whenever your Auto Scaling group scales.
  */
@@ -2161,82 +2028,6 @@ export enum ScalingEvent {
    * Send a test notification to the topic
    */
   TEST_NOTIFICATION = 'autoscaling:TEST_NOTIFICATION',
-}
-
-/**
- * Additional settings when a rolling update is selected
- * @deprecated use `UpdatePolicy.rollingUpdate()`
- */
-export interface RollingUpdateConfiguration {
-  /**
-   * The maximum number of instances that AWS CloudFormation updates at once.
-   *
-   * @default 1
-   */
-  readonly maxBatchSize?: number;
-
-  /**
-   * The minimum number of instances that must be in service before more instances are replaced.
-   *
-   * This number affects the speed of the replacement.
-   *
-   * @default 0
-   */
-  readonly minInstancesInService?: number;
-
-  /**
-   * The percentage of instances that must signal success for an update to succeed.
-   *
-   * If an instance doesn't send a signal within the time specified in the
-   * pauseTime property, AWS CloudFormation assumes that the instance wasn't
-   * updated.
-   *
-   * This number affects the success of the replacement.
-   *
-   * If you specify this property, you must also enable the
-   * waitOnResourceSignals and pauseTime properties.
-   *
-   * @default 100
-   */
-  readonly minSuccessfulInstancesPercent?: number;
-
-  /**
-   * The pause time after making a change to a batch of instances.
-   *
-   * This is intended to give those instances time to start software applications.
-   *
-   * Specify PauseTime in the ISO8601 duration format (in the format
-   * PT#H#M#S, where each # is the number of hours, minutes, and seconds,
-   * respectively). The maximum PauseTime is one hour (PT1H).
-   *
-   * @default Duration.minutes(5) if the waitOnResourceSignals property is true, otherwise 0
-   */
-  readonly pauseTime?: Duration;
-
-  /**
-   * Specifies whether the Auto Scaling group waits on signals from new instances during an update.
-   *
-   * AWS CloudFormation must receive a signal from each new instance within
-   * the specified PauseTime before continuing the update.
-   *
-   * To have instances wait for an Elastic Load Balancing health check before
-   * they signal success, add a health-check verification by using the
-   * cfn-init helper script. For an example, see the verify_instance_health
-   * command in the Auto Scaling rolling updates sample template.
-   *
-   * @default true if you specified the minSuccessfulInstancesPercent property, false otherwise
-   */
-  readonly waitOnResourceSignals?: boolean;
-
-  /**
-   * Specifies the Auto Scaling processes to suspend during a stack update.
-   *
-   * Suspending processes prevents Auto Scaling from interfering with a stack
-   * update.
-   *
-   * @default HealthCheck, ReplaceUnhealthy, AZRebalance, AlarmNotification, ScheduledActions.
-   */
-  readonly suspendProcesses?: ScalingProcess[];
 }
 
 /**
@@ -2436,23 +2227,6 @@ export enum AdditionalHealthCheckType {
    * VPC LATTICE Health Check
    */
   VPC_LATTICE = 'VPC_LATTICE',
-}
-
-/**
- * Render the rolling update configuration into the appropriate object
- */
-function renderRollingUpdateConfig(config: RollingUpdateConfiguration = {}): CfnAutoScalingRollingUpdate {
-  const waitOnResourceSignals = config.minSuccessfulInstancesPercent !== undefined;
-  const pauseTime = config.pauseTime || (waitOnResourceSignals ? Duration.minutes(5) : Duration.seconds(0));
-
-  return {
-    maxBatchSize: config.maxBatchSize,
-    minInstancesInService: config.minInstancesInService,
-    minSuccessfulInstancesPercent: validatePercentage(config.minSuccessfulInstancesPercent),
-    waitOnResourceSignals,
-    pauseTime: pauseTime && pauseTime.toIsoString(),
-    suspendProcesses: config.suspendProcesses ?? DEFAULT_SUSPEND_PROCESSES,
-  };
 }
 
 function validatePercentage(x?: number): number | undefined {

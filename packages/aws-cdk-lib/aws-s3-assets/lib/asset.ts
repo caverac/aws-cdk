@@ -1,7 +1,5 @@
 import * as path from 'path';
 import { Construct } from 'constructs';
-import { toSymlinkFollow } from './compat';
-import { CopyOptions } from '../../assets';
 import * as iam from '../../aws-iam';
 import * as kms from '../../aws-kms';
 import * as s3 from '../../aws-s3';
@@ -9,7 +7,7 @@ import * as cdk from '../../core';
 import { ValidationError } from '../../core/lib/errors';
 import * as cxapi from '../../cx-api';
 
-export interface AssetOptions extends CopyOptions, cdk.FileCopyOptions, cdk.AssetOptions {
+export interface AssetOptions extends cdk.FileCopyOptions, cdk.AssetOptions {
   /**
    * A list of principals that should be able to read this asset from S3.
    * You can use `asset.grantRead(principal)` to grant read permissions later.
@@ -175,7 +173,7 @@ export class Asset extends Construct implements cdk.IAsset {
     const staging = new cdk.AssetStaging(this, 'Stage', {
       ...props,
       sourcePath: path.resolve(props.path),
-      follow: props.followSymlinks ?? toSymlinkFollow(props.follow),
+      follow: props.followSymlinks,
       assetHash: props.assetHash ?? props.sourceHash,
     });
 
