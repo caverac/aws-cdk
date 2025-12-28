@@ -33,12 +33,6 @@ export enum CustomResourceProviderRuntime {
   NODEJS_12_X = 'nodejs12.x',
 
   /**
-   * Node.js 12.x
-   * @deprecated Use latest version
-   */
-  NODEJS_12 = 'deprecated_nodejs12.x',
-
-  /**
    * Node.js 14.x
    * @deprecated Use latest version
    */
@@ -135,7 +129,6 @@ export class CustomResourceProvider extends CustomResourceProviderBase {
 
 function customResourceProviderRuntimeToString(x: CustomResourceProviderRuntime): string {
   switch (x) {
-    case CustomResourceProviderRuntime.NODEJS_12:
     case CustomResourceProviderRuntime.NODEJS_12_X:
       return 'nodejs12.x';
     case CustomResourceProviderRuntime.NODEJS_14_X:

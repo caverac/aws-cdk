@@ -310,10 +310,10 @@ export class AssetStaging extends Construct {
 
     if (skip) {
       // We should have bundled, but didn't to save time. Still pretend to have a hash.
-      // If the asset uses OUTPUT or BUNDLE, we use a CUSTOM hash to avoid fingerprinting
+      // If the asset uses OUTPUT, we use a CUSTOM hash to avoid fingerprinting
       // a potentially very large source directory. Other hash types are kept the same.
       let hashType = this.hashType;
-      if (hashType === AssetHashType.OUTPUT || hashType === AssetHashType.BUNDLE) {
+      if (hashType === AssetHashType.OUTPUT) {
         this.customSourceFingerprint = Names.uniqueId(this);
         hashType = AssetHashType.CUSTOM;
       }
@@ -353,7 +353,7 @@ export class AssetStaging extends Construct {
     // the correct packaging type.
     // If the hash is calculated after bundling we remove the temporary directory now.
     if (bundledAsset.packaging === FileAssetPackaging.FILE) {
-      if (this.hashType === AssetHashType.OUTPUT || this.hashType === AssetHashType.BUNDLE) {
+      if (this.hashType === AssetHashType.OUTPUT) {
         fs.removeSync(path.dirname(bundledAsset.path));
       } else {
         fs.closeSync(fs.openSync(bundledAsset.path, 'w'));
@@ -503,10 +503,9 @@ export class AssetStaging extends Construct {
     switch (hashType) {
       case AssetHashType.SOURCE:
         return FileSystem.fingerprint(this.sourcePath, this.fingerprintOptions);
-      case AssetHashType.BUNDLE:
       case AssetHashType.OUTPUT:
         if (!outputDir) {
-          throw new ValidationError(`Cannot use \`${hashType}\` hash type when \`bundling\` is not specified.`, this);
+          throw new ValidationError('Cannot use `output` hash type when `bundling` is not specified.', this);
         }
         return FileSystem.fingerprint(outputDir, this.fingerprintOptions);
       default:

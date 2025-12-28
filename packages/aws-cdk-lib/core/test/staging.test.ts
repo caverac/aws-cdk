@@ -799,30 +799,6 @@ describe('staging', () => {
     );
   });
 
-  testDeprecated('bundling with BUNDLE asset hash type', () => {
-    // GIVEN
-    const app = new App();
-    const stack = new Stack(app, 'stack');
-    const directory = path.join(__dirname, 'fs', 'fixtures', 'test1');
-
-    // WHEN
-    const asset = new AssetStaging(stack, 'Asset', {
-      sourcePath: directory,
-      bundling: {
-        image: DockerImage.fromRegistry('alpine'),
-        command: [DockerStubCommand.SUCCESS],
-      },
-      assetHashType: AssetHashType.BUNDLE,
-    });
-
-    // THEN
-    expect(
-      readDockerStubInput()).toEqual(
-      `run --rm ${USER_ARG} -v /input:/asset-input:${delegated} -v /output:/asset-output:${delegated} -w /asset-input alpine DOCKER_STUB_SUCCESS`,
-    );
-    expect(asset.assetHash).toEqual('33cbf2cae5432438e0f046bc45ba8c3cef7b6afcf47b59d1c183775c1918fb1f');
-  });
-
   test('bundling with docker security option', () => {
     // GIVEN
     const app = new App();
@@ -837,7 +813,7 @@ describe('staging', () => {
         command: [DockerStubCommand.SUCCESS],
         securityOpt: 'no-new-privileges',
       },
-      assetHashType: AssetHashType.BUNDLE,
+      assetHashType: AssetHashType.OUTPUT,
     });
 
     // THEN
@@ -926,20 +902,6 @@ describe('staging', () => {
       assetHash: 'my-custom-hash',
       assetHashType: AssetHashType.OUTPUT,
     })).toThrow(/Cannot specify `output` for `assetHashType`/);
-  });
-
-  testDeprecated('throws with BUNDLE hash type and no bundling', () => {
-    // GIVEN
-    const app = new App();
-    const stack = new Stack(app, 'stack');
-    const directory = path.join(__dirname, 'fs', 'fixtures', 'test1');
-
-    // THEN
-    expect(() => new AssetStaging(stack, 'Asset', {
-      sourcePath: directory,
-      assetHashType: AssetHashType.BUNDLE,
-    })).toThrow(/Cannot use `bundle` hash type when `bundling` is not specified/);
-    expect(fs.existsSync(STUB_INPUT_FILE)).toEqual(false);
   });
 
   test('throws with OUTPUT hash type and no bundling', () => {
