@@ -1,4 +1,4 @@
-import { describeDeprecated, testDeprecated } from '@aws-cdk/cdk-build-tools';
+import { testDeprecated } from '@aws-cdk/cdk-build-tools';
 import { evaluateCFN } from './evaluate-cfn';
 import { toCloudFormation } from './util';
 import { Arn, ArnComponents, ArnFormat, Aws, CfnOutput, ScopedAws, Stack, Token } from '../lib';
@@ -100,26 +100,26 @@ describe('arn', () => {
     })).toThrow();
   });
 
-  describeDeprecated('Arn.parse(s)', () => {
+  describe('Arn.split()', () => {
     describe('fails', () => {
       test('if doesn\'t start with "arn:"', () => {
         const stack = new Stack();
-        expect(() => stack.parseArn('barn:foo:x:a:1:2')).toThrow(/ARNs must start with "arn:".*barn:foo/);
+        expect(() => stack.splitArn('barn:foo:x:a:1:2', ArnFormat.SLASH_RESOURCE_NAME)).toThrow(/ARNs must start with "arn:".*barn:foo/);
       });
 
       test('if the ARN doesnt have enough components', () => {
         const stack = new Stack();
-        expect(() => stack.parseArn('arn:is:too:short')).toThrow(/The `resource` component \(6th component\) of an ARN is required/);
+        expect(() => stack.splitArn('arn:is:too:short', ArnFormat.SLASH_RESOURCE_NAME)).toThrow(/The `resource` component \(6th component\) of an ARN is required/);
       });
 
       test('if "service" is not specified', () => {
         const stack = new Stack();
-        expect(() => stack.parseArn('arn:aws::4:5:6')).toThrow(/The `service` component \(3rd component\) of an ARN is required/);
+        expect(() => stack.splitArn('arn:aws::4:5:6', ArnFormat.SLASH_RESOURCE_NAME)).toThrow(/The `service` component \(3rd component\) of an ARN is required/);
       });
 
       test('if "resource" is not specified', () => {
         const stack = new Stack();
-        expect(() => stack.parseArn('arn:aws:service:::')).toThrow(/The `resource` component \(6th component\) of an ARN is required/);
+        expect(() => stack.splitArn('arn:aws:service:::', ArnFormat.SLASH_RESOURCE_NAME)).toThrow(/The `resource` component \(6th component\) of an ARN is required/);
       });
     });
 
@@ -229,7 +229,7 @@ describe('arn', () => {
     test('a Token with : separator', () => {
       const stack = new Stack();
       const theToken = { Ref: 'SomeParameter' };
-      const parsed = stack.parseArn(new Intrinsic(theToken).toString(), ':');
+      const parsed = stack.splitArn(new Intrinsic(theToken).toString(), ArnFormat.COLON_RESOURCE_NAME);
 
       expect(stack.resolve(parsed.partition)).toEqual({ 'Fn::Select': [1, { 'Fn::Split': [':', theToken] }] });
       expect(stack.resolve(parsed.service)).toEqual({ 'Fn::Select': [2, { 'Fn::Split': [':', theToken] }] });
@@ -243,7 +243,7 @@ describe('arn', () => {
     test('a Token with / separator', () => {
       const stack = new Stack();
       const theToken = { Ref: 'SomeParameter' };
-      const parsed = stack.parseArn(new Intrinsic(theToken).toString());
+      const parsed = stack.splitArn(new Intrinsic(theToken).toString(), ArnFormat.SLASH_RESOURCE_NAME);
 
       expect(parsed.sep).toEqual('/');
 
@@ -287,7 +287,7 @@ describe('arn', () => {
         arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
       };
 
-      expect(stack.parseArn(arn)).toEqual(expected);
+      expect(stack.splitArn(arn, ArnFormat.SLASH_RESOURCE_NAME)).toEqual(expected);
     });
   });
 
@@ -318,12 +318,12 @@ describe('arn', () => {
     });
   });
 
-  testDeprecated('parse other fields if only some are tokens', () => {
+  test('parse other fields if only some are tokens', () => {
     // GIVEN
     const stack = new Stack();
 
     // WHEN
-    const parsed = stack.parseArn(`arn:${Aws.PARTITION}:iam::123456789012:role/S3Access`);
+    const parsed = stack.splitArn(`arn:${Aws.PARTITION}:iam::123456789012:role/S3Access`, ArnFormat.SLASH_RESOURCE_NAME);
 
     // THEN
     expect(stack.resolve(parsed.partition)).toEqual({ Ref: 'AWS::Partition' });

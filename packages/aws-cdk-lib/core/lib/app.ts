@@ -49,14 +49,6 @@ export interface AppProps {
   /**
    * Include runtime versioning information in the Stacks of this app
    *
-   * @deprecated use `versionReporting` instead
-   * @default Value of 'aws:cdk:version-reporting' context key
-   */
-  readonly runtimeInfo?: boolean;
-
-  /**
-   * Include runtime versioning information in the Stacks of this app
-   *
    * @default Value of 'aws:cdk:version-reporting' context key
    */
   readonly analyticsReporting?: boolean;
@@ -194,10 +186,8 @@ export class App extends Stage {
       this.node.setContext(PRIVATE_CONTEXT_DEFAULT_STACK_SYNTHESIZER, props.defaultStackSynthesizer);
     }
 
-    const analyticsReporting = props.analyticsReporting ?? props.runtimeInfo;
-
-    if (analyticsReporting !== undefined) {
-      this.node.setContext(cxapi.ANALYTICS_REPORTING_ENABLED_CONTEXT, analyticsReporting);
+    if (props.analyticsReporting !== undefined) {
+      this.node.setContext(cxapi.ANALYTICS_REPORTING_ENABLED_CONTEXT, props.analyticsReporting);
     }
 
     const autoSynth = props.autoSynth ?? cxapi.OUTDIR_ENV in process.env;

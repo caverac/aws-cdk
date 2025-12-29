@@ -160,20 +160,6 @@ export interface DefaultStackSynthesizerProps {
   readonly cloudFormationExecutionRole?: string;
 
   /**
-   * Name of the CloudFormation Export with the asset key name
-   *
-   * You must supply this if you have given a non-standard name to the KMS key export
-   *
-   * The placeholders `${Qualifier}`, `${AWS::AccountId}` and `${AWS::Region}` will
-   * be replaced with the values of qualifier and the stack's account and region,
-   * respectively.
-   *
-   * @default DefaultStackSynthesizer.DEFAULT_FILE_ASSET_KEY_ARN_EXPORT_NAME
-   * @deprecated This property is not used anymore
-   */
-  readonly fileAssetKeyArnExportName?: string;
-
-  /**
    * Qualifier to disambiguate multiple environments in the same account
    *
    * You can use this and leave the other naming properties empty if you have deployed

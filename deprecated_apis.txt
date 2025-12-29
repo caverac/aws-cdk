@@ -1,5 +1,3 @@
-aws-cdk-lib.AppProps#runtimeInfo
-aws-cdk-lib.Arn#parse
 aws-cdk-lib.ArnComponents#sep
 aws-cdk-lib.AssetStaging#sourceHash
 aws-cdk-lib.AssetStaging#stagedPath
@@ -14,14 +12,11 @@ aws-cdk-lib.CfnInclude
 aws-cdk-lib.CfnInclude#template
 aws-cdk-lib.CfnIncludeProps
 aws-cdk-lib.CfnIncludeProps#template
-aws-cdk-lib.DefaultStackSynthesizerProps#fileAssetKeyArnExportName
 aws-cdk-lib.DockerImageAssetSource#repositoryName
 aws-cdk-lib.FileAssetLocation#s3Url
 aws-cdk-lib.ITemplateOptions#transform
 aws-cdk-lib.Stack#addDockerImageAsset
 aws-cdk-lib.Stack#addFileAsset
-aws-cdk-lib.Stack#parentStack
-aws-cdk-lib.Stack#parseArn
 aws-cdk-lib.aws_apigateway.CfnApiMappingV2
 aws-cdk-lib.aws_apigateway.CfnApiMappingV2#CFN_RESOURCE_TYPE_NAME
 aws-cdk-lib.aws_apigateway.CfnApiMappingV2#apiId

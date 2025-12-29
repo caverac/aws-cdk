@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { CfnConnection } from './events.generated';
-import { IResource, Resource, Stack, SecretValue, UnscopedValidationError } from '../../core';
+import { ArnFormat, IResource, Resource, Stack, SecretValue, UnscopedValidationError } from '../../core';
 import { addConstructMetadata } from '../../core/lib/metadata-resource';
 import { propertyInjectable } from '../../core/lib/prop-injectable';
 
@@ -306,7 +306,7 @@ export class Connection extends Resource implements IConnection {
    * @param connectionArn ARN of imported connection
    */
   public static fromEventBusArn(scope: Construct, id: string, connectionArn: string, connectionSecretArn: string): IConnection {
-    const parts = Stack.of(scope).parseArn(connectionArn);
+    const parts = Stack.of(scope).splitArn(connectionArn, ArnFormat.SLASH_RESOURCE_NAME);
 
     return new ImportedConnection(scope, id, {
       connectionArn: connectionArn,
@@ -382,7 +382,7 @@ class ImportedConnection extends Resource {
   public readonly connectionName: string;
   public readonly connectionSecretArn: string;
   constructor(scope: Construct, id: string, attrs: ConnectionAttributes) {
-    const arnParts = Stack.of(scope).parseArn(attrs.connectionArn);
+    const arnParts = Stack.of(scope).splitArn(attrs.connectionArn, ArnFormat.SLASH_RESOURCE_NAME);
     super(scope, id, {
       account: arnParts.account,
       region: arnParts.region,
